@@ -89,7 +89,7 @@ iOS can't respect the Silent switch and keep playing when locked at the same tim
 
 ## Contributing
 
-Rules for coding agents (and people) are in [AGENTS.md](AGENTS.md). `CLAUDE.md` imports it for Claude Code.
+Rules for coding agents (and people) are in [AGENTS.md](AGENTS.md).
 
 ## License
 
