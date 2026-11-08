@@ -61,7 +61,11 @@ final class AudioController {
   private func buildGraph() {
     let node = core.makeSourceNode(format: format)
     engine.attach(node)
-    engine.connect(node, to: engine.mainMixerNode, format: format)
+    do {
+      try engine.connectNode(node, to: engine.mainMixerNode, format: format)
+    } catch {
+      log("connect failed", error)
+    }
     source = node
   }
 
@@ -138,7 +142,13 @@ final class AudioController {
   private func handleConfigurationChange() {
     // The engine stops itself when the hardware format or route changes.
     guard shouldRun, !engine.isRunning else { return }
-    if let source { engine.connect(source, to: engine.mainMixerNode, format: format) }
+    if let source {
+      do {
+        try engine.connectNode(source, to: engine.mainMixerNode, format: format)
+      } catch {
+        log("reconnect failed", error)
+      }
+    }
     startIfNeeded()
   }
 
