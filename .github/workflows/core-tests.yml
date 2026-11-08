@@ -1,0 +1,15 @@
+name: core-tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Core tests (gcc)
+        run: make -C core test CXX=g++
+      - name: Core tests (clang)
+        run: make -C core clean && make -C core test CXX=clang++

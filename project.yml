@@ -1,0 +1,69 @@
+# XcodeGen spec. Generate the project with `xcodegen` (brew install xcodegen).
+name: Dihedra
+
+options:
+  bundleIdPrefix: com.drishan
+  deploymentTarget:
+    iOS: "27.1"
+  createIntermediateGroups: true
+
+configFiles:
+  Debug: Config/Base.xcconfig
+  Release: Config/Base.xcconfig
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: "YES"
+    CLANG_CXX_LANGUAGE_STANDARD: c++20
+    CLANG_ENABLE_OBJC_ARC: "YES"
+
+targets:
+  Dihedra:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+        excludes:
+          - Info.plist
+      - path: core/include
+        buildPhase: none
+    settings:
+      base:
+        PRODUCT_NAME: Dihedra
+        PRODUCT_BUNDLE_IDENTIFIER: com.drishan.dihedra
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_OBJC_BRIDGING_HEADER: App/Bridge/Dihedra-Bridging-Header.h
+        HEADER_SEARCH_PATHS:
+          - $(SRCROOT)/core/include
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        # Keep it on iPhone: no Mac or Vision Pro "Designed for iPhone" builds.
+        SUPPORTS_MACCATALYST: "NO"
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: "NO"
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: "NO"
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Dihedra
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.music
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        # Needed for the "Keep Playing When Locked" sound setting.
+        UIBackgroundModes:
+          - audio
+        # Lets MTKView run at 120 Hz on ProMotion displays.
+        CADisableMinimumFrameDurationOnPhone: true
+        UIRequiredDeviceCapabilities:
+          - arm64
+          - metal
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight

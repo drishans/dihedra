@@ -1,0 +1,6 @@
+// Shared build settings for every configuration.
+// Signing: copy Local.xcconfig.example to Local.xcconfig (gitignored) and
+// put your team ID there, so regenerating the project never loses it.
+CODE_SIGN_STYLE = Automatic
+
+#include? "Local.xcconfig"
