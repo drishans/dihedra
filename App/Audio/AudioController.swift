@@ -110,12 +110,13 @@ final class AudioController {
     let center = NotificationCenter.default
     observers.append(
       center.addObserver(
-        forName: AVAudioSession.interruptionNotification, object: nil, queue: .main
+        forName: AVAudioSession.resumptionRecommendationNotification, object: nil, queue: .main
       ) { [weak self] note in
-        let typeRaw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
-        let optionsRaw = note.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt
+        let context = note.userInfo?[AVAudioSession.resumptionContextKey]
+          as? AVAudioSession.ResumptionContext
+        let recommendation = context?.recommendation
         MainActor.assumeIsolated {
-          self?.handleInterruption(typeRaw: typeRaw, optionsRaw: optionsRaw)
+          self?.handleResumption(recommendation)
         }
       })
     observers.append(
@@ -132,11 +133,9 @@ final class AudioController {
       })
   }
 
-  private func handleInterruption(typeRaw: UInt?, optionsRaw: UInt?) {
-    guard let typeRaw, let type = AVAudioSession.InterruptionType(rawValue: typeRaw) else { return }
-    guard type == .ended else { return }
-    let options = AVAudioSession.InterruptionOptions(rawValue: optionsRaw ?? 0)
-    if options.contains(.shouldResume), shouldRun { startIfNeeded() }
+  private func handleResumption(_ recommendation: AVAudioSession.ResumptionRecommendation?) {
+    // Posted after an interruption ends. startIfNeeded() reactivates the session.
+    if recommendation == .shouldResume, shouldRun { startIfNeeded() }
   }
 
   private func handleConfigurationChange() {
