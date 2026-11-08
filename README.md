@@ -87,6 +87,12 @@ iOS can't respect the Silent switch and keep playing when locked at the same tim
 4. FFT bands into the shader
 5. Resonator and granular layers
 
-## Licensing
+## Contributing
+
+Rules for coding agents (and people) are in [AGENTS.md](AGENTS.md). `CLAUDE.md` imports it for Claude Code.
+
+## License
+
+The code is MIT licensed (see [LICENSE](LICENSE)). The name Dihedra and the app icon are not part of that license, so a published fork needs its own name and icon.
 
 Phase 3 onward will vendor DSP code from [pichenettes/eurorack](https://github.com/pichenettes/eurorack), using only the MIT-licensed STM32 projects (the AVR projects are GPL). The MIT license and Emilie Gillet's copyright will ship in the app's acknowledgements. The product never uses the "Mutable Instruments" name or module names.
