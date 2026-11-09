@@ -11,6 +11,15 @@ final class AudioController {
     }
   }
 
+  /// Muting fades out and releases the session like leaving the app does,
+  /// so nothing plays silence in the background.
+  var isMuted = false {
+    didSet {
+      guard isMuted != oldValue else { return }
+      updateRunState()
+    }
+  }
+
   private let core: DHCore
   private var engine = AVAudioEngine()
   private var source: AVAudioSourceNode?
@@ -46,7 +55,9 @@ final class AudioController {
 
   // MARK: - Run state
 
-  private var shouldRun: Bool { isForeground || mode == .alwaysIncludingBackground }
+  private var shouldRun: Bool {
+    !isMuted && (isForeground || mode == .alwaysIncludingBackground)
+  }
 
   private func updateRunState() {
     if shouldRun { startIfNeeded() } else { fadeOutAndPause() }

@@ -41,6 +41,11 @@ Postures:
 - Closed: keeps the last state the phone rested on and keeps playing, with the visuals on the cover screen.
 - Fully open: k = 1 (a single mirror) on the inner screen, audio continues.
 
+Controls sit in the iPhone Duo's vertical bar, under the status bar: Hold and Mute at the top, Settings at the bottom. Where the system uses horizontal bars, all three go top trailing. Tap the picture to show them; they fade after 3 s, or stay while VoiceOver is on.
+
+- Hold freezes the symmetry and the harmony so the phone can be put down or regripped. The button shows the current k. On release the hinge takes over again and both glide to its angle.
+- Mute fades the drone out and releases the audio session, the same as leaving the app.
+
 ### Threads
 
 ```
@@ -57,7 +62,7 @@ Audio and visuals each run the same critically damped spring toward the same tar
 ```
 App/
   DihedraApp.swift, AppModel.swift
-  UI/        RootView (hinge, scene phase, gear), SettingsView, FoldFallbackControl
+  UI/        RootView (hinge, scene phase, toolbar), SettingsView, FoldFallbackControl
   Render/    KaleidoView (MTKView), Renderer, Shaders.metal, DHShaderTypes.h
   Audio/     AudioController (session, engine, interruptions), SoundMode
   Bridge/    DHCore.h/.mm (Objective-C++ face of the core), bridging header
@@ -78,6 +83,7 @@ iOS can't respect the Silent switch and keep playing when locked at the same tim
 - How often do hinge updates arrive while moving and while still?
 - Closing: does the app stay active on the cover screen, and does the latched state hold?
 - Audio: no clicks at detent glides, launch or backgrounding, in each sound mode.
+- Controls: in the vertical bar on the cover screen and on the inner screen in landscape, and in a horizontal bar on the inner screen in portrait. No clicks when muting or unmuting.
 
 ## Roadmap
 

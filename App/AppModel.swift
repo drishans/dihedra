@@ -26,6 +26,19 @@ final class AppModel {
     }
   }
 
+  /// The committed symmetry, rounded. The renderer reports it when it changes.
+  var symmetry = 1
+
+  /// Freeze the picture and the sound so the phone can be put down or
+  /// regripped without the pattern changing.
+  var isHeld = false {
+    didSet { core.isHeld = isHeld }
+  }
+
+  var isMuted = false {
+    didSet { audio.isMuted = isMuted }
+  }
+
   /// Debug: drive the app from the on-screen fold control even on a Duo.
   var simulateHinge = false {
     didSet { if simulateHinge { pushVirtualAngle() } }

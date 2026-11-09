@@ -7,6 +7,8 @@ struct KaleidoView: UIViewRepresentable {
   /// Pause drawing whenever the scene isn't active. Apps can't submit GPU
   /// work from the background, and audio doesn't depend on frames.
   let paused: Bool
+  /// Called on the main thread when the committed symmetry changes.
+  let onSymmetryChange: (Int) -> Void
 
   final class Coordinator {
     var renderer: Renderer?
@@ -24,7 +26,7 @@ struct KaleidoView: UIViewRepresentable {
     view.preferredFramesPerSecond = 120
     view.autoResizeDrawable = true
 
-    let renderer = Renderer(view: view, core: core)
+    let renderer = Renderer(view: view, core: core, onSymmetryChange: onSymmetryChange)
     context.coordinator.renderer = renderer  // MTKView.delegate is weak
     view.delegate = renderer
     view.isPaused = paused

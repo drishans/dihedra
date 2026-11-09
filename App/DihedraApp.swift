@@ -6,9 +6,11 @@ struct DihedraApp: App {
 
   var body: some Scene {
     WindowGroup {
-      RootView()
-        .environment(model)
-        .preferredColorScheme(.dark)
+      NavigationStack {
+        RootView()
+      }
+      .environment(model)
+      .preferredColorScheme(.dark)
     }
   }
 }

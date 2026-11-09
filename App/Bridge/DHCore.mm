@@ -59,6 +59,14 @@ dihedra::HingeStatus ToCore(DHHingeStatus status) {
   _mapper.setDetents(detentsEnabled);
 }
 
+- (BOOL)isHeld {
+  return _mapper.held();
+}
+
+- (void)setHeld:(BOOL)held {
+  _mapper.setHeld(held);
+}
+
 - (AVAudioSourceNode *)makeSourceNodeWithFormat:(AVAudioFormat *)format {
   NSAssert(format.sampleRate == dihedra::Engine::kSampleRate,
            @"Dihedra renders at %.0f Hz", dihedra::Engine::kSampleRate);

@@ -8,8 +8,10 @@ final class Renderer: NSObject {
   private let queue: MTLCommandQueue
   private let pipeline: MTLRenderPipelineState
   private let startTime = CACurrentMediaTime()
+  private let onSymmetryChange: (Int) -> Void
+  private var symmetry = 0
 
-  init?(view: MTKView, core: DHCore) {
+  init?(view: MTKView, core: DHCore, onSymmetryChange: @escaping (Int) -> Void) {
     guard let device = view.device,
       let queue = device.makeCommandQueue(),
       let library = device.makeDefaultLibrary()
@@ -29,6 +31,7 @@ final class Renderer: NSObject {
     }
     self.queue = queue
     self.core = core
+    self.onSymmetryChange = onSymmetryChange
     super.init()
   }
 }
@@ -41,6 +44,11 @@ extension Renderer: MTKViewDelegate {
     // Tick the core every frame, even if this frame can't draw: the detent
     // dwell timer and the hinge filter need time to pass.
     let frame = core.frame(at: now)
+    let committed = Int(frame.kTarget.rounded())
+    if committed != symmetry {
+      symmetry = committed
+      onSymmetryChange(committed)
+    }
 
     guard let pass = view.currentRenderPassDescriptor,
       let drawable = view.currentDrawable,

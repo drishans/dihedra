@@ -26,6 +26,10 @@ typedef struct {
 /// Whether the hinge snaps to whole-number symmetries. Main thread.
 @property (nonatomic) BOOL detentsEnabled;
 
+/// Freezes the symmetry and the harmony where they are and ignores the
+/// hinge until released. Main thread.
+@property (nonatomic, getter=isHeld) BOOL held;
+
 /// Builds the source node. Its render block calls straight into C++ and
 /// captures only a raw pointer: no Objective-C, Swift, ARC or allocation
 /// on the audio thread. The format's sample rate must equal `sampleRate`.
