@@ -77,7 +77,33 @@ class HingeMapper {
     (void)t;
   }
 
+  // Hold: freeze the output where it is and ignore the hinge until released.
+  // The mapper keeps tracking underneath, so on release it picks up the
+  // current angle and the springs glide there.
+  void setHeld(bool on) {
+    if (on == held_) return;
+    held_ = on;
+    if (on) heldOutput_ = lastOutput_;
+  }
+
+  bool held() const { return held_; }
+
   MapperOutput tick(double t) {
+    lastOutput_ = track(t);
+    if (!held_) return lastOutput_;
+    // Closing while held keeps the held state, the same way closing keeps
+    // what the phone rested on.
+    restK_ = heldOutput_.kTarget;
+    restFine_ = heldOutput_.fine;
+    return heldOutput_;
+  }
+
+  int committed() const { return committed_; }
+
+ private:
+  int clampK(int k) const { return std::clamp(k, config_.minK, config_.maxK); }
+
+  MapperOutput track(double t) {
     if (!hasSample_) return {static_cast<float>(committed_), 0.0f};
     if (isClosed_) {
       // Closed: hold whatever the phone last rested on, so closing it keeps
@@ -110,11 +136,6 @@ class HingeMapper {
     }
     return out;
   }
-
-  int committed() const { return committed_; }
-
- private:
-  int clampK(int k) const { return std::clamp(k, config_.minK, config_.maxK); }
 
   // Schmitt trigger plus a dwell timer: a new detent must be passed by the
   // hysteresis margin and then held for dwellSeconds before it commits. A
@@ -149,6 +170,9 @@ class HingeMapper {
   double candidateSince_ = 0.0;
   float restK_ = 1.0f;
   float restFine_ = 0.0f;
+  bool held_ = false;
+  MapperOutput lastOutput_{1.0f, 0.0f};
+  MapperOutput heldOutput_{1.0f, 0.0f};
 };
 
 }  // namespace dihedra

@@ -172,6 +172,38 @@ static void testContinuousMode() {
   CHECK_NEAR(r.out.fine, 0.0f, 1e-6f);
 }
 
+static void testHoldFreezesThenFollows() {
+  Rig r;
+  r.hold(bandCenter(3), 1.0);
+  CHECK_NEAR(r.out.kTarget, 3.0f, 1e-6f);
+  const float fine = r.out.fine;
+  r.mapper.setHeld(true);
+  CHECK(r.mapper.held());
+  // Folding while held changes nothing, not even the fine offset.
+  r.sweep(bandCenter(3), bandCenter(6), 0.5);
+  r.hold(bandCenter(6), 1.0);
+  CHECK_NEAR(r.out.kTarget, 3.0f, 1e-6f);
+  CHECK_NEAR(r.out.fine, fine, 1e-6f);
+  // The mapper tracked the hinge underneath, so release lands on band 6
+  // at once instead of waiting out another dwell.
+  r.mapper.setHeld(false);
+  r.hold(bandCenter(6), 1.0 / 120.0);
+  CHECK_NEAR(r.out.kTarget, 6.0f, 1e-6f);
+
+  // Closing while held keeps the held state, and it stays latched after
+  // release until the phone opens again.
+  r.hold(bandCenter(6), 1.0);
+  r.mapper.setHeld(true);
+  r.hold(bandCenter(2), 1.0);
+  r.hold(5.0f, 1.0, HingeStatus::Closed);
+  CHECK_NEAR(r.out.kTarget, 6.0f, 1e-6f);
+  r.mapper.setHeld(false);
+  r.hold(5.0f, 1.0, HingeStatus::Closed);
+  CHECK_NEAR(r.out.kTarget, 6.0f, 1e-6f);
+  r.hold(bandCenter(4), 1.0);
+  CHECK_NEAR(r.out.kTarget, 4.0f, 1e-6f);
+}
+
 static void testEngine() {
   Engine e;
   std::vector<float> left(8192), right(8192);
@@ -252,6 +284,7 @@ int main() {
   testClosingLatchesRestedState();
   testFullyOpenIsSingleMirror();
   testContinuousMode();
+  testHoldFreezesThenFollows();
   testEngine();
   testHarmonicAtIntegerK();
   if (gFailures == 0) {
