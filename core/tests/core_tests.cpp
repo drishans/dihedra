@@ -12,6 +12,11 @@
 #include "dihedra/Spring.h"
 
 // Count heap allocations so we can prove render() never allocates.
+// GCC inlines the delete below and reports free() on memory from operator
+// new, not seeing that this file's operator new allocates with malloc.
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wmismatched-new-delete"
+#endif
 static std::atomic<long> gAllocations{0};
 void* operator new(std::size_t size) {
   gAllocations.fetch_add(1, std::memory_order_relaxed);
