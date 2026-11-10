@@ -33,6 +33,11 @@ inline constexpr float kFineOmega = 14.0f;
 inline constexpr float kGainAttackSeconds = 0.8f;
 inline constexpr float kGainReleaseSeconds = 0.03f;
 
+// Output high-pass. At k near 1 the FM puts a sideband at (1 - k) times the
+// root, which is DC at k = 1 and a sub-bass sweep while gliding there. Phone
+// speakers crackle trying to play it. 60 Hz is well under the 147 Hz root.
+inline constexpr float kHighPassHz = 60.0f;
+
 // Phase 1 drone.
 inline constexpr float kRootHz = 146.83f;   // D3
 inline constexpr float kDetune = 0.0012f;   // about 2 cents each side

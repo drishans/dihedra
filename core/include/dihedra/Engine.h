@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstddef>
 
+#include "dihedra/HighPass.h"
 #include "dihedra/Spring.h"
 #include "dihedra/Tuning.h"
 
@@ -101,6 +102,7 @@ class Engine {
     kSpring_.reset(1.0f);
     fineSpring_.reset(0.0f);
     drone_.init(kSampleRate);
+    for (HighPass& hp : highPass_) hp.init(tuning::kHighPassHz, kSampleRate);
     gainAttack_ = 1.0f - std::exp(-1.0f / (tuning::kGainAttackSeconds * kSampleRate));
     gainRelease_ = 1.0f - std::exp(-1.0f / (tuning::kGainReleaseSeconds * kSampleRate));
   }
@@ -118,8 +120,13 @@ class Engine {
       const float k1 = kSpring_.step(controls_.kTarget.load(std::memory_order_relaxed), dt);
       const float f1 = fineSpring_.step(controls_.fineTarget.load(std::memory_order_relaxed), dt);
       const float gainTarget = controls_.gainTarget.load(std::memory_order_relaxed);
-      drone_.render(left + done, right ? right + done : nullptr, n, k0, k1, f0, f1, &gain_,
-                    gainTarget, gainAttack_, gainRelease_);
+      float* l = left + done;
+      float* r = right ? right + done : nullptr;
+      drone_.render(l, r, n, k0, k1, f0, f1, &gain_, gainTarget, gainAttack_, gainRelease_);
+      for (size_t i = 0; i < n; ++i) l[i] = highPass_[0].process(l[i]);
+      if (r) {
+        for (size_t i = 0; i < n; ++i) r[i] = highPass_[1].process(r[i]);
+      }
       done += n;
     }
   }
@@ -133,6 +140,7 @@ class Engine {
   Spring kSpring_;
   Spring fineSpring_;
   FMDrone drone_;
+  HighPass highPass_[2];
   float gain_ = 0.0f;
   float gainAttack_ = 0.0f;
   float gainRelease_ = 0.0f;

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "dihedra/Engine.h"
+#include "dihedra/HighPass.h"
 #include "dihedra/HingeMapper.h"
 #include "dihedra/OneEuroFilter.h"
 #include "dihedra/Spring.h"
@@ -234,7 +235,9 @@ static void testEngine() {
   CHECK(gAllocations.load() == before);
   CHECK(finite);
   CHECK(maxAbs > 0.1f);
-  CHECK(maxAbs <= tuning::kOutputLevel + 1e-4f);
+  // The high-pass shifts each partial's phase, so the peak rises above the
+  // FM voice's flat envelope, but it stays far below full scale.
+  CHECK(maxAbs <= 2.0f * tuning::kOutputLevel);
   CHECK_NEAR(e.currentK(), 3.0f, 1e-3f);
   CHECK(e.currentGain() > 0.99f);
 
@@ -274,6 +277,74 @@ static void testHarmonicAtIntegerK() {
   CHECK(onHarmonic > 100.0 * between);
 }
 
+// Share of a signal's energy below hz, from a Hann-windowed DFT with 1 Hz
+// bins (the signal is one second long).
+static double lowShare(const std::vector<float>& x, int hz) {
+  const size_t n = x.size();
+  std::vector<double> w(n);
+  double total = 0.0;
+  for (size_t i = 0; i < n; ++i) {
+    w[i] = (0.5 - 0.5 * std::cos(2.0 * M_PI * i / (n - 1))) * x[i];
+    total += w[i] * w[i];
+  }
+  double low = 0.0;
+  for (int f = 0; f <= hz; ++f) {
+    double re = 0.0, im = 0.0;
+    for (size_t i = 0; i < n; ++i) {
+      const double ph = 2.0 * M_PI * f * static_cast<double>(i) / static_cast<double>(n);
+      re += w[i] * std::cos(ph);
+      im += w[i] * std::sin(ph);
+    }
+    low += (f == 0 ? 1.0 : 2.0) * (re * re + im * im);
+  }
+  return low / (static_cast<double>(n) * total);
+}
+
+static void testHighPass() {
+  const float sr = Engine::kSampleRate;
+  auto gainAt = [&](float hz) {
+    HighPass hp;
+    hp.init(tuning::kHighPassHz, sr);
+    double in = 0.0, out = 0.0;
+    for (int i = 0; i < 2 * 48000; ++i) {
+      const float x = hz == 0.0f ? 1.0f : std::sin(2.0f * 3.14159265f * hz * i / sr);
+      const float y = hp.process(x);
+      if (i >= 48000) {  // skip the settling second
+        in += x * x;
+        out += y * y;
+      }
+    }
+    return std::sqrt(out / in);
+  };
+  CHECK_NEAR(gainAt(tuning::kRootHz), 1.0, 0.01);  // the root passes untouched
+  CHECK(gainAt(30.0f) < 0.07);                    // about -24 dB an octave down
+  CHECK(gainAt(0.0f) < 1e-4);                     // no DC
+}
+
+static void testNoRumbleNearSingleMirror() {
+  // At k = 1 the FM's lower sideband sits at 0 Hz, and while k glides to 1 it
+  // sweeps down through the sub-bass. Both must be filtered out.
+  Engine e;
+  e.controls().gainTarget.store(1.0f);
+  std::vector<float> left(48000), right(48000);
+  e.render(left.data(), right.data(), 48000);  // settle at k = 1
+  e.render(left.data(), right.data(), 48000);
+  double meanL = 0.0, meanR = 0.0;
+  for (size_t i = 0; i < left.size(); ++i) {
+    meanL += left[i];
+    meanR += right[i];
+  }
+  CHECK(std::fabs(meanL / 48000.0) < 1e-3);
+  CHECK(std::fabs(meanR / 48000.0) < 1e-3);
+
+  e.controls().kTarget.store(2.0f);
+  e.render(left.data(), right.data(), 48000);
+  e.controls().kTarget.store(1.0f);
+  e.render(left.data(), right.data(), 48000);  // the glide back to 1
+  CHECK(lowShare(left, 30) < 1e-3);
+  CHECK(lowShare(right, 30) < 1e-3);
+}
+
 int main() {
   testSpringExactness();
   testOneEuro();
@@ -287,6 +358,8 @@ int main() {
   testHoldFreezesThenFollows();
   testEngine();
   testHarmonicAtIntegerK();
+  testHighPass();
+  testNoRumbleNearSingleMirror();
   if (gFailures == 0) {
     std::printf("All core tests passed.\n");
     return 0;

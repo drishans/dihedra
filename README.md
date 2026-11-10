@@ -67,7 +67,7 @@ App/
   Audio/     AudioController (session, engine, interruptions), SoundMode
   Bridge/    DHCore.h/.mm (Objective-C++ face of the core), bridging header
 core/
-  include/dihedra/  Tuning, Spring, OneEuroFilter, HingeMapper, Engine
+  include/dihedra/  Tuning, Spring, OneEuroFilter, HingeMapper, HighPass, Engine
   tests/            core_tests.cpp
 tools/shader_preview.py   numpy port of the shader for quick look checks
 ```

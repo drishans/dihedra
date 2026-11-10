@@ -151,6 +151,7 @@ final class AudioController {
 
   private func handleConfigurationChange() {
     // The engine stops itself when the hardware format or route changes.
+    log("engine configuration changed, running: \(engine.isRunning)")
     guard shouldRun, !engine.isRunning else { return }
     if let source {
       do {
@@ -164,12 +165,17 @@ final class AudioController {
 
   private func handleMediaServicesReset() {
     // Everything audio is invalid now: rebuild from scratch.
+    log("media services were reset")
     engine = AVAudioEngine()
     buildGraph()
     if shouldRun { startIfNeeded() }
   }
 
   private func log(_ message: String, _ error: Error) {
-    print("Dihedra audio: \(message): \(error)")
+    log("\(message): \(error)")
+  }
+
+  private func log(_ message: String) {
+    print("Dihedra audio: \(message)")
   }
 }
