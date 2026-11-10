@@ -85,7 +85,10 @@ final class AudioController {
     let category: AVAudioSession.Category = mode == .respectSilentMode ? .ambient : .playback
     try session.setCategory(category, mode: .default, options: [])
     try session.setPreferredSampleRate(DHCore.sampleRate)
-    try session.setPreferredIOBufferDuration(0.005)
+    // Not a low-latency 5 ms: with buffers that small, iPhone Duo's audio
+    // output crackles while the hinge moves, for any app playing a steady
+    // tone. Nothing here needs low latency, since changes glide over 0.7 s.
+    try session.setPreferredIOBufferDuration(0.02)
   }
 
   private func startIfNeeded() {
