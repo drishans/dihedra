@@ -316,14 +316,14 @@ static void testHighPass() {
     }
     return std::sqrt(out / in);
   };
-  CHECK_NEAR(gainAt(tuning::kRootHz), 1.0, 0.01);  // the root passes untouched
-  CHECK(gainAt(30.0f) < 0.07);                    // about -24 dB an octave down
-  CHECK(gainAt(0.0f) < 1e-4);                     // no DC
+  CHECK_NEAR(gainAt(tuning::kRootHz), 1.0, 0.01);    // the root passes untouched
+  CHECK(gainAt(0.5f * tuning::kHighPassHz) < 0.07);  // about -24 dB an octave down
+  CHECK(gainAt(0.0f) < 1e-4);                        // no DC
 }
 
 static void testNoRumbleNearSingleMirror() {
   // At k = 1 the FM's lower sideband sits at 0 Hz, and while k glides to 1 it
-  // sweeps down through the sub-bass. Both must be filtered out.
+  // sweeps down below hearing. Both must be filtered out.
   Engine e;
   e.controls().gainTarget.store(1.0f);
   std::vector<float> left(48000), right(48000);
@@ -341,8 +341,9 @@ static void testNoRumbleNearSingleMirror() {
   e.render(left.data(), right.data(), 48000);
   e.controls().kTarget.store(1.0f);
   e.render(left.data(), right.data(), 48000);  // the glide back to 1
-  CHECK(lowShare(left, 30) < 1e-3);
-  CHECK(lowShare(right, 30) < 1e-3);
+  const int subsonic = static_cast<int>(0.5f * tuning::kHighPassHz);
+  CHECK(lowShare(left, subsonic) < 1e-3);
+  CHECK(lowShare(right, subsonic) < 1e-3);
 }
 
 int main() {

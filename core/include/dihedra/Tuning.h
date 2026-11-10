@@ -34,9 +34,10 @@ inline constexpr float kGainAttackSeconds = 0.8f;
 inline constexpr float kGainReleaseSeconds = 0.03f;
 
 // Output high-pass. At k near 1 the FM puts a sideband at (k - 1) times the
-// root, which is DC at k = 1 (it thumped on mute) and a sub-bass sweep while
-// gliding there. 60 Hz is well under the 147 Hz root, which passes unchanged.
-inline constexpr float kHighPassHz = 60.0f;
+// root, which is DC at k = 1 (it thumped on mute) and sweeps down through the
+// bass while gliding there. 20 Hz removes the DC and the part below hearing
+// and keeps the audible sweep.
+inline constexpr float kHighPassHz = 20.0f;
 
 // Phase 1 drone.
 inline constexpr float kRootHz = 146.83f;   // D3
