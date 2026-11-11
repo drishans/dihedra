@@ -10,6 +10,8 @@ typedef struct {
   float k;            // smoothed symmetry; seamless when it is a whole number
   float fine;         // offset inside the current detent, -1..1
   float energy;       // reserved for the phase 4 FFT bands
+  float sourceMix;    // camera pipeline only: 0 shows the glass, 1 the camera
+  float sourceAngle;  // camera pipeline only: clockwise turn, in radians, that levels the camera image
 } DHUniforms;
 
 #endif

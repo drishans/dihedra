@@ -15,7 +15,7 @@ xcodegen
 open Dihedra.xcodeproj
 ```
 
-On iPhones and simulators without a hinge the app shows a fold slider instead. Xcode 27.1's Device Hub has no hinge control, so if the iPhone Duo simulator doesn't show the slider, turn on Settings › Debug › Simulate Hinge (Debug builds).
+On iPhones and simulators without a hinge the app shows a fold slider instead. Xcode 27.1's Device Hub has no hinge control, so if the iPhone Duo simulator doesn't show the slider, turn on Settings › Debug › Simulate Hinge (Debug builds). Simulators have no cameras, so the Camera picture needs a real phone.
 
 Core tests run anywhere with a C++20 compiler, no Xcode needed:
 
@@ -46,6 +46,12 @@ Controls sit in the iPhone Duo's vertical bar, under the status bar: Hold and Mu
 - Hold freezes the symmetry and the harmony so the phone can be put down or regripped. The button shows the current k. On release the hinge takes over again and both glide to its angle.
 - Mute fades the drone out and releases the audio session, the same as leaving the app.
 
+### Picture
+
+Settings › Picture chooses what sits behind the mirrors: drifting stained glass (the default) or the camera. The picture fades between the two whenever the camera starts, stops or is interrupted. At k = 1 the right half of the screen shows the right half of the camera's view and the left half mirrors it; at higher k a narrower wedge from the middle of the view is folded round.
+
+The camera is chosen by the way it faces, Faces Away or Faces You, not by whether it's a front or back camera. On iPhone Duo opening or closing the phone moves the app to the other display, so a camera that faced the scene now faces you. An `AVCaptureDeviceDirectionCoordinator` reports which cameras face which way and Dihedra switches when that changes. A rotation coordinator reports how far to turn the image to keep it level, and the shader does the turn, so the capture system doesn't have to rotate every frame. Camera images never leave the phone and nothing is recorded.
+
 ### Threads
 
 ```
@@ -53,6 +59,7 @@ main thread        onHingeChange -> DHCore -> HingeMapper (One Euro filter, dete
                                                   | relaxed atomics
 audio thread       AVAudioSourceNode block -> dihedra::Engine (12-sample blocks, 48 kHz)
 render (main)      MTKView draw -> DHCore.frame(at:) -> Shaders.metal
+camera queues      AVCaptureSession -> CVMetalTextureCache -> latest frame (mutex) -> render
 ```
 
 Audio and visuals each run the same critically damped spring toward the same targets, so they glide in step. The render block captures a raw C++ pointer and runs only C++: no Swift, Objective-C, ARC, locks or allocation. The core tests check the no-allocation part.
@@ -65,6 +72,7 @@ App/
   UI/        RootView (hinge, scene phase, toolbar), SettingsView, FoldFallbackControl
   Render/    KaleidoView (MTKView), Renderer, Shaders.metal, DHShaderTypes.h
   Audio/     AudioController (session, engine, interruptions), SoundMode
+  Camera/    CameraFeed (camera by direction, capture into Metal textures), PictureSource
   Bridge/    DHCore.h/.mm (Objective-C++ face of the core), bridging header
 core/
   include/dihedra/  Tuning, Spring, OneEuroFilter, HingeMapper, HighPass, Engine
@@ -85,10 +93,17 @@ iOS can't respect the Silent switch and keep playing when locked at the same tim
 - Audio: no clicks at detent glides, launch or backgrounding, in each sound mode.
 - Controls: in the vertical bar on the cover screen and on the inner screen in landscape, and in a horizontal bar on the inner screen in portrait. No clicks when muting or unmuting.
 
+## Phase 2 checklist on device
+
+- Camera: the permission prompt appears the first time Camera is chosen, and the picture fades from the glass to the camera and back.
+- At k = 1 the camera's view is level in portrait and landscape, on the inner and the cover screen.
+- Faces Away and Faces You pick the right camera when partly open, flat and closed, and switch when the phone opens or closes.
+- No audio clicks, dropped frames or heat from running the camera alongside the drone.
+
 ## Roadmap
 
-1. Hinge to drone and a basic shader (this)
-2. Full kaleidoscope shader, camera source
+1. Hinge to drone and a basic shader
+2. Full kaleidoscope shader, camera source (this)
 3. Two-operator FM engine from pichenettes/eurorack, k as the ratio
 4. FFT bands into the shader
 5. Resonator and granular layers

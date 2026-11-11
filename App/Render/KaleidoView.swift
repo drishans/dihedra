@@ -4,6 +4,7 @@ import SwiftUI
 /// SwiftUI wrapper for the Metal view.
 struct KaleidoView: UIViewRepresentable {
   let core: DHCore
+  let camera: CameraFeed
   /// Pause drawing whenever the scene isn't active. Apps can't submit GPU
   /// work from the background, and audio doesn't depend on frames.
   let paused: Bool
@@ -26,10 +27,11 @@ struct KaleidoView: UIViewRepresentable {
     view.preferredFramesPerSecond = 120
     view.autoResizeDrawable = true
 
-    let renderer = Renderer(view: view, core: core, onSymmetryChange: onSymmetryChange)
+    let renderer = Renderer(view: view, core: core, camera: camera, onSymmetryChange: onSymmetryChange)
     context.coordinator.renderer = renderer  // MTKView.delegate is weak
     view.delegate = renderer
     view.isPaused = paused
+    camera.attach(view)
     return view
   }
 

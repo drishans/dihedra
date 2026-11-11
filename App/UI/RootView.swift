@@ -17,7 +17,9 @@ struct RootView: View {
     @Bindable var model = model
 
     ZStack {
-      KaleidoView(core: model.core, paused: scenePhase != .active) { model.symmetry = $0 }
+      KaleidoView(core: model.core, camera: model.camera, paused: scenePhase != .active) {
+        model.symmetry = $0
+      }
         .ignoresSafeArea()
         .contentShape(Rectangle())
         .onTapGesture { revealChrome() }

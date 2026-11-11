@@ -10,6 +10,7 @@ enum HingeAvailability {
 final class AppModel {
   let core: DHCore
   let audio: AudioController
+  let camera: CameraFeed
 
   private(set) var hingeAvailability: HingeAvailability = .unknown
 
@@ -24,6 +25,20 @@ final class AppModel {
     didSet {
       soundMode.store()
       audio.mode = soundMode
+    }
+  }
+
+  var pictureSource: PictureSource {
+    didSet {
+      pictureSource.store()
+      camera.isWanted = pictureSource == .camera
+    }
+  }
+
+  var cameraFacing: CameraFacing {
+    didSet {
+      cameraFacing.store()
+      camera.facing = cameraFacing
     }
   }
 
@@ -60,6 +75,15 @@ final class AppModel {
     self.core = core
     self.soundMode = mode
     self.audio = AudioController(core: core, mode: mode)
+
+    let source = PictureSource.stored
+    let facing = CameraFacing.stored
+    let camera = CameraFeed()
+    camera.facing = facing
+    camera.isWanted = source == .camera
+    self.camera = camera
+    self.pictureSource = source
+    self.cameraFacing = facing
   }
 
   func start() {
@@ -92,6 +116,7 @@ final class AppModel {
 
   func scenePhaseChanged(_ phase: ScenePhase) {
     audio.scenePhaseChanged(phase)
+    camera.isSceneActive = phase == .active
   }
 
   private func pushVirtualAngle() {

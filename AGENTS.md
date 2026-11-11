@@ -35,6 +35,8 @@ Without macOS you can run the core tests and the shader preview, but you can't b
 
 **New APIs.** The iPhone Duo hinge API (`onHingeChange`, `DeviceHinge`) arrived in iOS 27.1 and is newer than most models' training data. Check Apple's current documentation before using or changing it, and don't guess API names. Apple guarantees no hinge update rate, step size or precision, so raw angles always go through the One Euro filter in `HingeMapper`.
 
+**Camera.** Choose cameras with `AVCaptureDeviceDirectionCoordinator` (iOS 27.1), never by `position`: on iPhone Duo the way a camera faces changes when the app moves between displays. Level the image in the shader with the rotation coordinator's angle, and keep the capture connection's `videoRotationAngle` at 0 so frames aren't rotated twice. Simulators have no cameras, so camera changes can only be checked on a device.
+
 **Device-only checks.** Feel, hinge timing, posture changes and audio clicks can only be judged on an iPhone Duo (or partly in its simulator). The README's on-device checklist lists them. Don't mark those as verified from tests alone.
 
 ## Third-party code
