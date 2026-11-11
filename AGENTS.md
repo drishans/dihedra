@@ -41,7 +41,9 @@ Without macOS you can run the core tests and the shader preview, but you can't b
 
 ## Third-party code
 
-From phase 3 the app vendors DSP from [pichenettes/eurorack](https://github.com/pichenettes/eurorack). Use only its MIT-licensed STM32 projects, never the GPL AVR ones. Keep Emilie Gillet's copyright notice and the MIT text next to the vendored code and in the app's acknowledgements. Never use the name "Mutable Instruments" or the names of its modules in the app's name, UI text or App Store metadata.
+From phase 3 the app vendors DSP from [pichenettes/eurorack](https://github.com/pichenettes/eurorack). Use only its MIT-licensed STM32 projects, never the GPL AVR ones. Keep Emilie Gillet's copyright notice and the MIT text next to the vendored code and in the app's acknowledgements (`App/UI/AcknowledgementsView.swift`).
+
+Vendored code is ported into `core/include/dihedra/eurorack/` so the core stays header-only and warning-free. Each file starts with the upstream notice, names the upstream files and commit it came from, and says what changed. Keep the synthesis identical: before committing a port, build the upstream code beside it and compare their output on the same inputs, then pin a few upstream samples in `core/tests/core_tests.cpp`, as `testEurorackFMMatchesUpstream` does. Never use the name "Mutable Instruments" or the names of its modules in the app's name, UI text or App Store metadata.
 
 ## Forking
 

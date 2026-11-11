@@ -59,6 +59,10 @@ struct SettingsView: View {
             Toggle("Detents", isOn: $model.detents)
           }
         #endif
+
+        Section {
+          NavigationLink("Acknowledgements") { AcknowledgementsView() }
+        }
       }
       .navigationTitle("Dihedra")
       .navigationBarTitleDisplayMode(.inline)

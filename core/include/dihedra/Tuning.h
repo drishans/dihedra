@@ -42,10 +42,15 @@ inline constexpr float kGainReleaseSeconds = 0.03f;
 // and keeps the audible sweep.
 inline constexpr float kHighPassHz = 20.0f;
 
-// Phase 1 drone.
+// Drone.
 inline constexpr float kRootHz = 146.83f;   // D3
 inline constexpr float kDetune = 0.0012f;   // about 2 cents each side
 inline constexpr float kOutputLevel = 0.22f;
 inline constexpr float kBreathHz = 0.07f;
+// FM feedback, from -1 (rough: the output bends the modulator's frequency)
+// through 0 (none) to 1 (brighter: it bends the modulator's phase).
+inline constexpr float kFeedback = 0.0f;
+// The voice an octave below the carrier, relative to it.
+inline constexpr float kSubLevel = 0.5f;
 
 }  // namespace dihedra::tuning

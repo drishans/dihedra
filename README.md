@@ -27,6 +27,8 @@ make -C core test
 
 Two mirrors at angle 180/k degrees make a pattern with 2k images. That pattern only closes without a seam when k is a whole number, and two-operator FM with ratio k:1 is only harmonic when k is a whole number. So the picture and the sound lock at the same moments, and both drift out of tune together in between.
 
+The voice is the two-operator FM engine from Emilie Gillet's [eurorack](https://github.com/pichenettes/eurorack) code, run at four times the sample rate, with its voice an octave below mixed in. Upstream snaps the ratio to a table of musical ratios; Dihedra feeds k in directly, so the sound can sit between whole numbers. Two copies, detuned by about 2 cents, make the stereo pair.
+
 From about 85° iOS counts the phone as closed and moves the app to the cover screen, so k runs from 1 to 8 between flat and 95°, all on the inner screen. Bands are equal width, about 11 degrees each, a little over twice Apple's stated 5 degree accuracy.
 
 | k | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
@@ -76,6 +78,7 @@ App/
   Bridge/    DHCore.h/.mm (Objective-C++ face of the core), bridging header
 core/
   include/dihedra/  Tuning, Spring, OneEuroFilter, HingeMapper, HighPass, Engine
+    eurorack/       FMEngine (ported from pichenettes/eurorack, MIT)
   tests/            core_tests.cpp
 tools/shader_preview.py   numpy port of the shader for quick look checks
 ```
@@ -100,11 +103,17 @@ iOS can't respect the Silent switch and keep playing when locked at the same tim
 - Faces Away and Faces You pick the right camera when partly open, flat and closed, and switch when the phone opens or closes.
 - No audio clicks, dropped frames or heat from running the camera alongside the drone.
 
+## Phase 3 checklist on device
+
+- No clicks at detent glides, launch, muting or backgrounding with the new voice.
+- The voice an octave down on headphones and on the speaker, and the level against phase 2's drone.
+- No extra heat or battery drain from the 4x oversampling.
+
 ## Roadmap
 
 1. Hinge to drone and a basic shader
-2. Full kaleidoscope shader, camera source (this)
-3. Two-operator FM engine from pichenettes/eurorack, k as the ratio
+2. Full kaleidoscope shader, camera source
+3. Two-operator FM engine from pichenettes/eurorack, k as the ratio (this)
 4. FFT bands into the shader
 5. Resonator and granular layers
 
@@ -116,4 +125,4 @@ Rules for coding agents (and people) are in [AGENTS.md](AGENTS.md).
 
 The code is MIT licensed (see [LICENSE](LICENSE)). The name Dihedra and the app icon are not part of that license, so a published fork needs its own name and icon.
 
-Phase 3 onward will vendor DSP code from [pichenettes/eurorack](https://github.com/pichenettes/eurorack), using only the MIT-licensed STM32 projects (the AVR projects are GPL). The MIT license and Emilie Gillet's copyright will ship in the app's acknowledgements. The product never uses the "Mutable Instruments" name or module names.
+The FM voice in `core/include/dihedra/eurorack/` is ported from [pichenettes/eurorack](https://github.com/pichenettes/eurorack), which is MIT licensed for its STM32 projects (the AVR projects are GPL, and none of their code is used). Emilie Gillet's copyright and the MIT license sit at the top of the ported file and in Settings › Acknowledgements. The product never uses the "Mutable Instruments" name or module names.

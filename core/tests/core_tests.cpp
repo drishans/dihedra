@@ -279,30 +279,80 @@ static void testEngine() {
   CHECK(e.currentGain() < 0.01f);
 }
 
-static void testHarmonicAtIntegerK() {
-  // With integer k the carrier period repeats exactly: compare one carrier
-  // period apart using a root-aligned sample rate is awkward, so instead check
-  // the spectrum has energy only near multiples of the root via a coarse DFT.
-  Engine e;
-  e.controls().gainTarget.store(1.0f);
-  e.controls().kTarget.store(2.0f);
-  std::vector<float> left(48000), right(48000);
-  e.render(left.data(), right.data(), 48000);  // settle
-  e.render(left.data(), right.data(), 48000);
-  auto power = [&](double hz) {
-    double re = 0, im = 0;
-    for (size_t i = 0; i < left.size(); ++i) {
-      const double w = 0.5 - 0.5 * std::cos(2.0 * M_PI * i / (left.size() - 1));
-      const double ph = 2.0 * M_PI * hz * i / 48000.0;
-      re += w * left[i] * std::cos(ph);
-      im += w * left[i] * std::sin(ph);
-    }
-    return re * re + im * im;
+static void testEurorackFMMatchesUpstream() {
+  // Samples rendered by the upstream engine (plaits/dsp/engine/fm_engine.cc
+  // at f4cfa76) from these frequencies, depth and feedback, with its ramps
+  // starting at zero. The port's own sine table differs from upstream's in
+  // the last bit of 4 values, which moves the output by about 3e-5.
+  struct Case {
+    float carrier, modulator, amount, feedback;
+    float out[8], aux[8];  // samples 59, 119, ... 479
   };
+  const Case cases[] = {
+      {0.00153358269f, 0.00283042877f, 0.720000029f, 0.0f,
+       {-0.6806858f, 0.5981702f, -0.5234749f, -0.7511883f, 0.3455241f, 0.9097989f, -0.6815007f,
+        0.2881171f},
+       {0.2600222f, 0.2718256f, 0.3741468f, -0.4887782f, -0.2313416f, 0.9972638f, 0.7937097f,
+        -0.02845994f}},
+      {0.000766791345f, 0.00265594199f, 1.28000009f, 0.700000048f,
+       {0.04804746f, -0.01446873f, -0.2436055f, -0.6484803f, 0.4451418f, -0.7192175f, -0.2283236f,
+        -0.3256709f},
+       {0.3315334f, 0.8284703f, 0.9242604f, 0.7657452f, -0.3898287f, 0.9243024f, -0.3749707f,
+        -0.5108317f}},
+      {0.00306716538f, 0.00372652407f, 0.5f, -0.600000024f,
+       {0.8990485f, -0.6020702f, -0.9744546f, -0.9590811f, -0.02433852f, -0.8897436f, 0.9594715f,
+        -0.969029f},
+       {0.3600428f, -0.6922646f, -0.348891f, 0.9220534f, -0.9544218f, 0.356387f, -0.834824f,
+        -0.9768583f}},
+  };
+  for (const Case& c : cases) {
+    eurorack::FMEngine fm;
+    fm.init();
+    float out[480], aux[480];
+    for (int b = 0; b < 40; ++b) {
+      fm.render(c.carrier, c.modulator, c.amount, c.feedback, out + 12 * b, aux + 12 * b, 12);
+    }
+    for (int i = 0; i < 8; ++i) {
+      CHECK_NEAR(out[59 + 60 * i], c.out[i], 1e-4f);
+      CHECK_NEAR(aux[59 + 60 * i], c.aux[i], 1e-4f);
+    }
+  }
+}
+
+// Power at hz in one second of x, from a Hann-windowed DFT.
+static double power(const std::vector<float>& x, double hz) {
+  double re = 0, im = 0;
+  for (size_t i = 0; i < x.size(); ++i) {
+    const double w = 0.5 - 0.5 * std::cos(2.0 * M_PI * i / (x.size() - 1));
+    const double ph = 2.0 * M_PI * hz * i / 48000.0;
+    re += w * x[i] * std::cos(ph);
+    im += w * x[i] * std::sin(ph);
+  }
+  return re * re + im * im;
+}
+
+static void testHarmonicAtIntegerK() {
+  // With the voice an octave down, a whole number k puts every partial on a
+  // multiple of half the root. Between whole numbers they leave that grid.
+  auto settle = [](float k) {
+    Engine e;
+    e.controls().gainTarget.store(1.0f);
+    e.controls().kTarget.store(k);
+    std::vector<float> left(48000), right(48000);
+    e.render(left.data(), right.data(), 48000);  // settle
+    e.render(left.data(), right.data(), 48000);
+    return left;
+  };
+  // Powers relative to the carrier's.
   const double root = tuning::kRootHz;
-  const double onHarmonic = power(root * 3.0);
-  const double between = power(root * 2.5);
-  CHECK(onHarmonic > 100.0 * between);
+  const std::vector<float> two = settle(2.0f);
+  const double carrier = power(two, root);
+  CHECK(power(two, root * 3.0) > 0.1 * carrier);   // carrier + modulator
+  CHECK(power(two, root * 0.5) > 0.1 * carrier);   // the sub voice
+  CHECK(power(two, root * 2.25) < 1e-4 * carrier);  // nothing off the grid
+
+  const std::vector<float> between = settle(2.3f);
+  CHECK(power(between, root * 3.3) > 0.1 * power(between, root));
 }
 
 // Share of a signal's energy below hz, from a Hann-windowed DFT with 1 Hz
@@ -388,6 +438,7 @@ int main() {
   testContinuousMode();
   testHoldFreezesThenFollows();
   testEngine();
+  testEurorackFMMatchesUpstream();
   testHarmonicAtIntegerK();
   testHighPass();
   testNoRumbleNearSingleMirror();
