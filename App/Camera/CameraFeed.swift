@@ -213,6 +213,11 @@ nonisolated final class CameraCapture: NSObject, AVCaptureVideoDataOutputSampleB
     if session.canSetSessionPreset(.hd1920x1080) { session.sessionPreset = .hd1920x1080 }
     output.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
     output.alwaysDiscardsLateVideoFrames = true
+    // The frames are only ever shown, never recorded, so screen-sized ones
+    // are enough. They let focus and exposure settle faster, and they allow
+    // preview stabilization on cameras without the low latency kind.
+    output.automaticallyConfiguresOutputBufferDimensions = false
+    output.deliversPreviewSizedOutputBuffers = true
     output.setSampleBufferDelegate(self, queue: frameQueue)
     if session.canAddOutput(output) { session.addOutput(output) }
   }
@@ -234,11 +239,21 @@ nonisolated final class CameraCapture: NSObject, AVCaptureVideoDataOutputSampleB
     guard session.canAddInput(newInput) else { return }
     session.addInput(newInput)
     input = newInput
+    guard let connection = output.connection(with: .video) else { return }
     // The shader levels the image for free, so the connection mustn't also
     // rotate every buffer.
-    if let connection = output.connection(with: .video), connection.isVideoRotationAngleSupported(0) {
-      connection.videoRotationAngle = 0
+    if connection.isVideoRotationAngleSupported(0) { connection.videoRotationAngle = 0 }
+    if connection.isVideoStabilizationSupported {
+      connection.preferredVideoStabilizationMode = Self.stabilization(for: device.activeFormat)
     }
+  }
+
+  /// The mirrors multiply every tremor of the hand, so the image is always
+  /// steadied. The first two modes add almost no delay; standard, the
+  /// fallback, adds a little.
+  private static func stabilization(for format: AVCaptureDevice.Format) -> AVCaptureVideoStabilizationMode {
+    [.lowLatency, .previewOptimized, .standard].first(where: format.isVideoStabilizationModeSupported)
+      ?? .off
   }
 
   private func applyRunning() {
