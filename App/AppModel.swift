@@ -14,8 +14,9 @@ final class AppModel {
   private(set) var hingeAvailability: HingeAvailability = .unknown
 
   /// Stand-in hinge for iPhones without one (and for debugging on a Duo).
-  /// Same scale as the real hinge: 180 is flat, 60 is the most folded.
-  var virtualAngle: Double = 132 {
+  /// Same scale as the real hinge, from DHCore.steepDegrees (the most
+  /// folded) to DHCore.flatDegrees. Starts at k = 4.
+  var virtualAngle: Double = 146 {
     didSet { if usesVirtualHinge { pushVirtualAngle() } }
   }
 

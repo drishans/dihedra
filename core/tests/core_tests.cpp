@@ -63,7 +63,10 @@ struct Rig {
   }
 };
 
-static float bandCenter(int k) { return 180.0f - 16.0f * static_cast<float>(k - 1); }
+// One detent band in degrees, and the hinge angle at the center of band k.
+static constexpr float kBand = (tuning::kFlatDegrees - tuning::kSteepDegrees) /
+                               (static_cast<float>(tuning::kMaxK - tuning::kMinK) + 0.5f);
+static float bandCenter(int k) { return tuning::kFlatDegrees - kBand * static_cast<float>(k - 1); }
 
 static void testSpringExactness() {
   Spring a, b;
@@ -100,7 +103,7 @@ static void testOneEuro() {
 static void testPosition() {
   HingeMapper m;
   CHECK_NEAR(m.position(180.0f), 1.0f, 1e-5f);
-  CHECK_NEAR(m.position(60.0f), 8.5f, 1e-5f);
+  CHECK_NEAR(m.position(tuning::kSteepDegrees), 8.5f, 1e-5f);
   CHECK_NEAR(m.position(10.0f), 8.5f, 1e-5f);   // clamps
   CHECK_NEAR(m.position(200.0f), 0.5f, 1e-5f);  // clamps
   for (int k = 1; k <= 8; ++k) CHECK_NEAR(m.position(bandCenter(k)), static_cast<float>(k), 1e-4f);
@@ -123,7 +126,7 @@ static void testHysteresis() {
   r.hold(bandCenter(3), 1.0);
   CHECK_NEAR(r.out.kTarget, 3.0f, 1e-6f);
   // Sit right on the 3/4 boundary with +-1 degree jitter: stays at 3.
-  const float boundary = 180.0f - 16.0f * 2.5f;
+  const float boundary = tuning::kFlatDegrees - kBand * 2.5f;
   const double dt = 1.0 / 120.0;
   for (int i = 0; i < 600; ++i, r.t += dt) {
     r.mapper.onHinge(boundary + ((i % 2) ? 1.0f : -1.0f), HingeStatus::PartiallyOpen, r.t);
@@ -137,7 +140,7 @@ static void testHysteresis() {
 static void testQuickSweepCommitsNothing() {
   Rig r;
   r.hold(bandCenter(2), 1.0);
-  r.sweep(bandCenter(2), bandCenter(7), 0.3);  // about 270 deg/s
+  r.sweep(bandCenter(2), bandCenter(7), 0.3);  // about 190 deg/s
   r.hold(bandCenter(7), 0.05);
   CHECK_NEAR(r.out.kTarget, 2.0f, 1e-6f);  // passed bands 3..6 without committing
   r.hold(bandCenter(7), 0.8);
@@ -157,6 +160,31 @@ static void testClosingLatchesRestedState() {
   CHECK_NEAR(r.out.kTarget, 5.0f, 1e-6f);
 }
 
+static void testLaggingStatusCountsAsClosed() {
+  // Closing that slows to a stop before the status says closed. iOS has
+  // reported closed by 66 degrees at the latest, so 55 counts as closed
+  // anyway, and the end of closing never becomes the remembered state.
+  Rig r;
+  r.hold(bandCenter(3), 1.5);
+  const float nearlyShut = 55.0f;
+  r.sweep(bandCenter(3), nearlyShut, 0.4);
+  r.hold(nearlyShut, 1.0);  // status still partiallyOpen
+  CHECK_NEAR(r.out.kTarget, 3.0f, 1e-6f);
+  r.hold(5.0f, 1.0, HingeStatus::Closed);
+  CHECK_NEAR(r.out.kTarget, 3.0f, 1e-6f);
+}
+
+static void testTopBandBeforeCoverScreen() {
+  // iOS reports closed, and moves the app to the cover screen, from about
+  // 85 degrees. k = 8 must be reached above that, and closing keeps it.
+  Rig r;
+  r.hold(bandCenter(1), 1.0);
+  r.hold(90.0f, 1.0);
+  CHECK_NEAR(r.out.kTarget, 8.0f, 1e-6f);
+  r.hold(84.0f, 1.0, HingeStatus::Closed);
+  CHECK_NEAR(r.out.kTarget, 8.0f, 1e-6f);
+}
+
 static void testFullyOpenIsSingleMirror() {
   Rig r;
   r.hold(bandCenter(4), 1.0);
@@ -168,7 +196,7 @@ static void testContinuousMode() {
   MapperConfig c;
   c.detents = false;
   Rig r(c);
-  r.hold(180.0f - 16.0f * 2.3f, 2.0);  // x = 3.3
+  r.hold(tuning::kFlatDegrees - kBand * 2.3f, 2.0);  // x = 3.3
   CHECK_NEAR(r.out.kTarget, 3.3f, 0.02f);
   CHECK_NEAR(r.out.fine, 0.0f, 1e-6f);
 }
@@ -354,6 +382,8 @@ int main() {
   testHysteresis();
   testQuickSweepCommitsNothing();
   testClosingLatchesRestedState();
+  testLaggingStatusCountsAsClosed();
+  testTopBandBeforeCoverScreen();
   testFullyOpenIsSingleMirror();
   testContinuousMode();
   testHoldFreezesThenFollows();

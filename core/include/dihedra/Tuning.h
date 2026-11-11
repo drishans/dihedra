@@ -3,19 +3,22 @@
 
 namespace dihedra::tuning {
 
-// Hinge range. 180 degrees is flat; below kSteepDegrees the inner screen is
-// hard to see, so the symmetry range is stretched across [kSteep, kFlat].
+// Hinge range. 180 degrees is flat. From about 85 degrees iOS reports the
+// phone closed and moves the app to the cover screen (it flickers between
+// the screens there), so the symmetry range is stretched across
+// [kSteep, kFlat], which keeps every k on the inner screen with a margin.
 inline constexpr float kFlatDegrees = 180.0f;
-inline constexpr float kSteepDegrees = 60.0f;
-// Below this the phone counts as closed even if the status lags.
-inline constexpr float kClosedDegrees = 25.0f;
+inline constexpr float kSteepDegrees = 95.0f;
+// Below this the phone counts as closed even if the status lags. iOS has
+// reported closed as late as 66 degrees.
+inline constexpr float kClosedDegrees = 60.0f;
 
 // Symmetry k = 180 / mirror angle. k = 1 is a single mirror.
 inline constexpr int kMinK = 1;
 inline constexpr int kMaxK = 8;
 
-// Detents. One unit is one band, about 16 degrees of hinge travel.
-inline constexpr float kHysteresis = 0.2f;     // about 3 degrees
+// Detents. One unit is one band, about 11 degrees of hinge travel.
+inline constexpr float kHysteresis = 0.2f;     // about 2 degrees
 inline constexpr double kDwellSeconds = 0.2;   // hold this long before committing
 inline constexpr float kRestSpeed = 12.0f;     // deg/s; slower than this counts as resting
 

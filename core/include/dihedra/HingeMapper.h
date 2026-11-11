@@ -52,8 +52,8 @@ class HingeMapper {
 
   // Continuous position in detent units. Flat maps to minK (the center of
   // the first band); steepDegrees maps to the outer edge of the last band.
-  // Linear in angle so every band is the same width (about 16 degrees,
-  // roughly three times Apple's stated 5 degree accuracy).
+  // Linear in angle so every band is the same width (about 11 degrees,
+  // a little over twice Apple's stated 5 degree accuracy).
   float position(float degrees) const {
     const float span = config_.flatDegrees - config_.steepDegrees;
     const float u = (config_.flatDegrees - degrees) / span;
@@ -128,9 +128,10 @@ class HingeMapper {
       out.fine = std::clamp((x - static_cast<float>(committed_)) / reach, -1.0f, 1.0f);
     }
 
-    // Remember the resting state, but only inside the usable range, so the
-    // last moments of closing never become the remembered state.
-    if (speed < config_.restSpeed && degrees >= config_.steepDegrees) {
+    // Remember the resting state. The last moments of closing never become
+    // it, because a closed phone (by status, or below closedDegrees) has
+    // already returned early.
+    if (speed < config_.restSpeed) {
       restK_ = out.kTarget;
       restFine_ = out.fine;
     }

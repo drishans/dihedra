@@ -23,6 +23,11 @@ typedef struct {
 /// The core renders at this rate (48 kHz, the eurorack engines' native rate).
 @property (class, nonatomic, readonly) double sampleRate;
 
+/// The hinge range the symmetries span, in degrees: the most folded angle
+/// (the highest k) and flat (k = 1).
+@property (class, nonatomic, readonly) double steepDegrees;
+@property (class, nonatomic, readonly) double flatDegrees;
+
 /// Whether the hinge snaps to whole-number symmetries. Main thread.
 @property (nonatomic) BOOL detentsEnabled;
 

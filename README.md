@@ -15,7 +15,7 @@ xcodegen
 open Dihedra.xcodeproj
 ```
 
-The iPhone Duo simulator in Device Hub can open, close and fold the device. On other simulators and iPhones the app shows a fold slider instead.
+On iPhones and simulators without a hinge the app shows a fold slider instead. Xcode 27.1's Device Hub has no hinge control, so if the iPhone Duo simulator doesn't show the slider, turn on Settings › Debug › Simulate Hinge (Debug builds).
 
 Core tests run anywhere with a C++20 compiler, no Xcode needed:
 
@@ -27,13 +27,13 @@ make -C core test
 
 Two mirrors at angle 180/k degrees make a pattern with 2k images. That pattern only closes without a seam when k is a whole number, and two-operator FM with ratio k:1 is only harmonic when k is a whole number. So the picture and the sound lock at the same moments, and both drift out of tune together in between.
 
-The hinge range is stretched so k runs from 1 to 8 over the angles where the inner screen is still easy to see. Bands are equal width, about 16 degrees each, roughly three times Apple's stated 5 degree accuracy.
+From about 85° iOS counts the phone as closed and moves the app to the cover screen, so k runs from 1 to 8 between flat and 95°, all on the inner screen. Bands are equal width, about 11 degrees each, a little over twice Apple's stated 5 degree accuracy.
 
 | k | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
 |---|---|---|---|---|---|---|---|---|
-| Hinge (band center) | 180° | 164° | 148° | 132° | 116° | 100° | 84° | 68° |
+| Hinge (band center) | 180° | 169° | 157° | 146° | 135° | 123° | 112° | 101° |
 
-Detents: a new k commits only after the hinge passes the band edge by about 3 degrees and holds for 0.2 s, then the symmetry and the FM ratio glide there together over about 0.7 s. Quick sweeps commit nothing along the way. Small nudges inside a band turn the glass and brighten the tone without changing the harmony.
+Detents: a new k commits only after the hinge passes the band edge by about 2 degrees and holds for 0.2 s, then the symmetry and the FM ratio glide there together over about 0.7 s. Quick sweeps commit nothing along the way. Small nudges inside a band turn the glass and brighten the tone without changing the harmony.
 
 Postures:
 

@@ -38,6 +38,14 @@ dihedra::HingeStatus ToCore(DHHingeStatus status) {
   return dihedra::Engine::kSampleRate;
 }
 
++ (double)steepDegrees {
+  return dihedra::tuning::kSteepDegrees;
+}
+
++ (double)flatDegrees {
+  return dihedra::tuning::kFlatDegrees;
+}
+
 - (instancetype)init {
   if ((self = [super init])) {
     _engine = std::make_unique<dihedra::Engine>();
